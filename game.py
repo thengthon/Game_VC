@@ -1,19 +1,41 @@
 #_________________________________________Imports_______________________________________________________________________
 
 from tkinter import *
-from PIL import ImageTk, Image
 
 #________________Variables_________________
 
 screenWidth = 700
 screenHeight = 600
-playerX = 30
-playerY = 50
+playerX = 300
+playerY = 500
+listOfBullets = []
 
 #________________Functions_________________
 
 def displayGrid():
     canvas.moveto(player, playerX, playerY)
+
+def move_bullets():
+    global listOfBullets
+    toPop = []
+
+    #___To check the bullet can move or not______
+    for i in range(len(listOfBullets)):
+        if listOfBullets[i][2] > -40:
+            listOfBullets[i][2] -= 5
+        else:
+            toPop.append(i)
+
+    #___To delete bullets which is useless_______
+    for index in toPop:
+        listOfBullets.pop(index)
+
+    #___To move bullets up________________________
+    for bullet in listOfBullets:
+        canvas.moveto(bullet[0], bullet[1], bullet[2])
+
+
+    canvas.after(10, move_bullets)
 
 
 
@@ -53,7 +75,16 @@ def onKeyDown(event):
 #___To shoot_______________________________
 
 def creat_bullet(event):
-    canvas.create_image()
+    global listOfBullets, toKill
+    playerPosition = canvas.coords(player)
+    
+    x = playerPosition[0] - 10
+    y = playerPosition[1] - 60
+    toKill = canvas.create_image(x, y, anchor=NW, image = bullet)
+
+    listOfBullets.append([toKill, x, y])
+
+
 
 
 
@@ -69,23 +100,24 @@ canvas.pack(expand=True, fill="both")
 
 #________________To display background image and player__________________
 
-bgImage = PhotoImage(file='bg.gif')
-bullet = PhotoImage(file='bullet.gif')
-img = PhotoImage(file='shooter.gif')
+bgImage = PhotoImage(file='pictures/bg.gif')
+bullet = PhotoImage(file='pictures/bullet.gif')
+img = PhotoImage(file='pictures/shooter.gif')
 
 background = canvas.create_image(700, 600, anchor=SE, image=bgImage)
 player = canvas.create_image(playerX, playerY, anchor=CENTER, image=img)
 
 
 displayGrid()
+move_bullets()
 
 #____Arrow keys to move__________________________________
 
 root.bind('<a>', onKeyleft)
 root.bind('<f>', onKeyRight)
-root.bind('<e>', onKeyUp)
+root.bind('<s>', onKeyUp)
 root.bind('<d>', onKeyDown)
-root.bind('<Return>', onKeyDown)
+root.bind('<Return>', creat_bullet)
 
 root.mainloop()
 
