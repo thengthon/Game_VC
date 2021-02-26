@@ -1,10 +1,8 @@
-#_________________________________________Imports_______________________________________________________________________
-
 from tkinter import *
 import random
 
 #________________Variables_________________
-
+times = 0
 screenWidth = 700
 screenHeight = 600
 playerX = 310
@@ -15,13 +13,13 @@ listOfEnemyBullets = []
 
 #____________________________________Functions__________________________________________________________________________________________________
 
-#___To delete bullets or enemies when they meet each other_______
+###############___Global Process_____############################################################################################
+def globalProcess():
+    global times
 
-def delete():
-    global listOfPlayerBullets, listOfEnemyBullets, listOfEnemies
-    playerPop = -1
-    enBulletPop = -1
-    enemyPop = -1
+    times += 1
+
+    toDelete = []
     isMeet = False
     for playerBulletIndex in range(len(listOfPlayerBullets)):
         positionOfBulletPlayer = canvas.coords(listOfPlayerBullets[playerBulletIndex])
@@ -29,137 +27,112 @@ def delete():
             positionOfBulletEn = canvas.coords(listOfEnemyBullets[enBulletIndex])
             if (positionOfBulletPlayer[1] == positionOfBulletEn[1]+15) and (((positionOfBulletEn[0] >= positionOfBulletPlayer[0]) and (positionOfBulletEn[0] <= positionOfBulletPlayer[0]+15)) or ((positionOfBulletEn[0]+10 >= positionOfBulletPlayer[0]) and (positionOfBulletEn[0]+10 <= positionOfBulletPlayer[0]+15))):
                 isMeet = True
-                canvas.delete(listOfPlayerBullets[playerBulletIndex])
-                canvas.delete(listOfEnemyBullets[enBulletIndex])
-                playerPop.append(playerBulletIndex)
-                playerPop.append(enBulletIndex)
+                toDelete.append(listOfPlayerBullets[playerBulletIndex])
+                toDelete.append(listOfEnemyBullets[enBulletIndex])
 
         if not isMeet:
             for enIndex in range(len(listOfEnemies)):
                 positionOfEn = canvas.coords(listOfEnemies[enIndex])
                 if (positionOfBulletPlayer[1] == positionOfEn[1]+70) and (((positionOfBulletPlayer[0] >= positionOfEn[0]) and (positionOfBulletPlayer[0] <= positionOfEn[0]+55)) or ((positionOfBulletPlayer[0]+15 >= positionOfEn[0]) and (positionOfBulletPlayer[0]+15 <= positionOfEn[0]+55))):
-                    canvas.delete(listOfPlayerBullets[playerBulletIndex])
-                    canvas.delete(listOfEnemies[enIndex])
-                    playerPop.append(playerBulletIndex)
-                    playerPop.append(enIndex)
-            
+                    toDelete.append(listOfPlayerBullets[playerBulletIndex])
+                    toDelete.append(listOfEnemies[enIndex])
+    if len(toDelete) > 0 and isMeet:
+        listOfPlayerBullets.remove(toDelete[0])
+        listOfEnemyBullets.remove(toDelete[1])
+        canvas.delete(toDelete[0])
+        canvas.delete(toDelete[1])
+    elif len(toDelete) > 0:
+        listOfPlayerBullets.remove(toDelete[0])
+        listOfEnemies.remove(toDelete[1])
+        canvas.delete(toDelete[0])
+        canvas.delete(toDelete[1])
     
-    if playerPop != -1:
-        listOfPlayerBullets.pop(playerPop)
-        if isMeet:
-            listOfEnemyBullets.pop(enBulletPop)
-        else:
-            listOfEnemies.pop(enemyPop)
+    #___Move the bullets of the enemies_________________________________________________________________
+    if times % 10 == 0:
+        toPopEnBullet = []
+        for i in range(len(listOfEnemyBullets)):
+            bullet = listOfEnemyBullets[i]
+            bulletPosition = canvas.coords(bullet)
+            if bulletPosition[1] >= 550:
+                canvas.delete(bullet)
+                toPopEnBullet.append(i)
+        for index in toPopEnBullet:
+            listOfEnemyBullets.pop(index)
+        for bullet in listOfEnemyBullets:
+            canvas.move(bullet, 0, 5)
 
-    canvas.after(1, delete)
+    #___Move all the bullets of player________________________
+        toPopPlayerBullet = []
+        for i in range(len(listOfPlayerBullets)):
+            oneBullet = listOfPlayerBullets[i]
+            bulletPosition = canvas.coords(oneBullet)
+            if bulletPosition[1] <= -40:
+                canvas.delete(oneBullet)
+                toPopPlayerBullet.append(i)
+        for index in toPopPlayerBullet:
+            listOfPlayerBullets.pop(index)
+        for bullet in listOfPlayerBullets:
+            canvas.move(bullet, 0, -5)
 
-#___To move all the bullets of player________________________
+    #___Move enemies________________________________________________________________________________
+    if times % 100 == 0:
+        toPopEn = []
+        for index in range(len(listOfEnemies)):
+            eachEnemy = listOfEnemies[index]
+            position = canvas.coords(eachEnemy)
+            if position[1] > 550:
+                canvas.delete(listOfEnemies[index])
+                toPopEn.append(index)
+            canvas.move(eachEnemy, 0, 5)
+    
+        for i in toPopEn:
+            listOfEnemies.pop(i)
 
-def movePlayerBullets():
-    global listOfPlayerBullets
-    toPop = []
+    #___Create an enemy_____________________________________________________________________________
+    if times % 1500 == 0:
+        enemy = canvas.create_image(random.randrange(10, 630), -60, anchor=NW, image=enemyImage)
+        listOfEnemies.append(enemy)
 
-    #___To check the bullet can move or not______
+    #___Enemies create the bullets_____________________________________________________________________
+    if times % 4000 == 0:
+        creator = random.choice(listOfEnemies)
+        position = canvas.coords(creator)
+        enGun = canvas.create_image(position[0] + 22.5, position[1] + 70, anchor=NW, image = enemyBullet)
+        listOfEnemyBullets.append(enGun)
+    
+    canvas.after(1, globalProcess)
 
-    for i in range(len(listOfPlayerBullets)):
-        oneBullet = listOfPlayerBullets[i]
-        bulletPosition = canvas.coords(oneBullet)
-        if bulletPosition[1] <= -40:
-            canvas.delete(oneBullet)
-            toPop.append(i)
+###########################################################################################################################
 
-    #___To delete bullets which is useless_______
-
-    for index in toPop:
-        listOfPlayerBullets.pop(index)
-
-    #___To move bullets up________________________
-
-    for bullet in listOfPlayerBullets:
-        canvas.move(bullet, 0, -5)
-
-
-    canvas.after(10, movePlayerBullets)
-
-#___ToTo display the enemies___________________________
-
-def moveEnemies():
-    global listOfEnemies
-    toPop = []
-    for index in range(len(listOfEnemies)):
-        eachEnemy = listOfEnemies[index]
-        position = canvas.coords(eachEnemy)
-        if position[1] > 550:
-            canvas.delete(listOfEnemies[index])
-            toPop.append(index)
-        canvas.move(eachEnemy, 0, 5)
-  
-    for i in toPop:
-        listOfEnemies.pop(i)
-
-    canvas.after(100, moveEnemies)
-
-#___To move all bullets of enemies___________________
-
-def moveEnemyBullets():
-    global listOfEnemyBullets
-    toPop = []
-
-    #___To check the bullet can move or not______
-
-    for i in range(len(listOfEnemyBullets)):
-        bullet = listOfEnemyBullets[i]
-        bulletPosition = canvas.coords(bullet)
-        if bulletPosition[1] >= 550:
-            canvas.delete(bullet)
-            toPop.append(i)
-
-    #___To delete bullets which is useless_______
-
-    for index in toPop:
-        listOfEnemyBullets.pop(index)
-
-    #___To move bullets up________________________
-
-    for bullet in listOfEnemyBullets:
-        canvas.move(bullet, 0, 5)
-
-    canvas.after(10, moveEnemyBullets)
-
-#___To move left by key______________________________
-
+#___Move left by key______________________________
 def onKeyleft(event):
     global playerX
     if playerX > 10:
         playerX -= 10
     canvas.moveto(player, playerX, playerY)
 
-#___To move right by key_____________________________
-
+#___Move right by key_____________________________
 def onKeyRight(event):
     global playerX
     if playerX < 610:
         playerX += 10
     canvas.moveto(player, playerX, playerY)
 
-#___To move up by key________________________________
-
+#___Move up by key________________________________
 def onKeyUp(event):
     global playerY
     if playerY > 10:
         playerY -= 10
     canvas.moveto(player, playerX, playerY)
 
-#___To move down by key______________________________
-
+#___Move down by key______________________________
 def onKeyDown(event):
     global playerY
     if playerY < 510:
         playerY += 10
     canvas.moveto(player, playerX, playerY)
 
-#___Player creates a bullet__________________________________
-
+#___Player creates a bullet_______________________
 def createBullet(event):
     global listOfPlayerBullets, toKill
     playerPosition = canvas.coords(player)
@@ -167,25 +140,7 @@ def createBullet(event):
 
     listOfPlayerBullets.append(toKill)
 
-#___Enemies create a bullet_______________________________
-
-def enemyCreateBullet():
-    creator = random.choice(listOfEnemies)
-    position = canvas.coords(creator)
-    enGun = canvas.create_image(position[0] + 22.5, position[1] + 70, anchor=NW, image = enemyBullet)
-    listOfEnemyBullets.append(enGun)
-    canvas.after(4000, enemyCreateBullet)
-
-#___Create an enemy________________________________________
-
-def createEnemy():
-    global listOfEnemies
-    enemy = canvas.create_image(random.randrange(10, 630), -60, anchor=NW, image=enemyImage)
-    listOfEnemies.append(enemy)
-    canvas.after(3000, createEnemy)
-
 #_______________________Create Window____________________
-
 root = Tk()
 root.geometry(str(screenWidth) + "x" + str(screenHeight))
 root.title('Pro-Developer')
@@ -193,8 +148,7 @@ root.resizable(False, False)
 canvas = Canvas(root)
 canvas.pack(expand=True, fill="both")
 
-#________________To display background image and player__________________
-
+#________________To display background image and player_______________________________
 bgImage = PhotoImage(file='pictures/bg.gif')
 gun = PhotoImage(file='pictures/playerBullet.gif')        # size of the bullet (15x30)
 enemyBullet = PhotoImage(file='pictures/enBullet.gif')    # size of the bullet (10x15)
@@ -204,17 +158,9 @@ enemyImage = PhotoImage(file='pictures/enemy.gif')        # size of the player (
 background = canvas.create_image(700, 600, anchor=SE, image=bgImage)
 player = canvas.create_image(playerX, playerY, anchor=NW, image=playerImage)
 
-#___Calling functions_______________
-
-createEnemy()
-moveEnemies()
-enemyCreateBullet()
-moveEnemyBullets()
-movePlayerBullets()
-delete()
+globalProcess()
 
 #___Arrow keys to move______________
-
 root.bind('<s>', onKeyleft)
 root.bind('<d>', onKeyRight)
 root.bind('<a>', onKeyUp)
