@@ -1,11 +1,14 @@
 from tkinter import *
 import random
+import winsound
+import os
 
 #---Variables-----------------
 times = 0
 score = 0
 toConfig = 0
 numOfSucceedEn = 0
+paused = False
 numOFBullets = 100            # The index of live to configure
 screenWidth = 700
 screenHeight = 650
@@ -25,48 +28,53 @@ def globalProcess():
 
     times += 1
 
-    bulletMeetBullet()
-    bulletMeetEn()
+    if not paused:
+        bulletMeetBullet()
+        bulletMeetEn()
 
-    #____To check if the player win with the score limited_______________________
-    if score == 50:
-        result = 'Congratulation'
-        finishGame()
-        return None
-    
-    bulletMeetPlayer()
-    enemyMeetPlayer()
+        #____To check if the player win with the score limited_______________________
+        if score == 50:
+            result = 'Congratulation'
+            winsound.PlaySound("sound/win.wav",winsound.SND_FILENAME | winsound.SND_ASYNC)
+            finishGame()
+            return None
+        
+        bulletMeetPlayer()
+        enemyMeetPlayer()
 
-    #___# Finish the game when player has no bullet, or has no live, or enemies passed 20 times____
-    if (numOFBullets == -1):
-        result += '\nYou have no bullets.\nScores: ' + str(score)
-        finishGame()
-        return None
-    elif (toConfig == -6):
-        result += '\nYou have no LIVE.\nScores: ' + str(score)
-        finishGame()
-        return None
-    elif (numOfSucceedEn == 20):
-        result += '\nEnemies passed 20 times.\nScores: ' + str(score)
-        finishGame()
-        return None
+        #___# Finish the game when player has no bullet, or has no live, or enemies passed 20 times____
+        if (numOFBullets == -1):
+            result += '\nYou have no bullets.\nScores: ' + str(score)
+            winsound.PlaySound("sound/over.wav",winsound.SND_FILENAME | winsound.SND_ASYNC)
+            finishGame()
+            return None
+        elif (toConfig == -6):
+            result += '\nYou have no LIVE.\nScores: ' + str(score)
+            winsound.PlaySound("sound/over.wav",winsound.SND_FILENAME | winsound.SND_ASYNC)
+            finishGame()
+            return None
+        elif (numOfSucceedEn == 20):
+            result += '\nEnemies passed 20 times.\nScores: ' + str(score)
+            winsound.PlaySound("sound/over.wav",winsound.SND_FILENAME | winsound.SND_ASYNC)
+            finishGame()
+            return None
 
-    #___Move bullets__________
-    moveBulletsOfEn()
-    moveBulletsOfPlayer()
+        #___Move bullets__________
+        moveBulletsOfEn()
+        moveBulletsOfPlayer()
 
-    #___Move enemies__________
-    if times % 5 == 0:
-        moveEnemies()
+        #___Move enemies__________
+        if times % 5 == 0:
+            moveEnemies()
 
-    #___Create an enemy_______
-    if times % 75 == 0:
-        createEnemy()
+        #___Create an enemy_______
+        if times % 75 == 0:
+            createEnemy()
 
-    #___Enemies create the bullets___
-    if times % 150 == 0:
-        enCreateBullet()
-    
+        #___Enemies create the bullets___
+        if times % 150 == 0:
+            enCreateBullet()
+        
     canvas.after(15, globalProcess)
 
 #------------------------------------------------------#
@@ -117,8 +125,10 @@ def moveBulletsOfEn():
 
 #___Player creates a bullet_______________________
 def createBullet(event):
-    global numOFBullets
-    if (numOFBullets > 0) and (toConfig != -6) and (score < 50):
+    global numOFBullets, paused
+    paused = False
+    if (numOFBullets > 0) and (toConfig != -6) and (score < 50) and (numOfSucceedEn < 20):
+        winsound.PlaySound("sound/shoot.wav",winsound.SND_FILENAME | winsound.SND_ASYNC)
         numOFBullets -= 1
         canvas.itemconfig(showBullets, text=("Bullets: " + str(numOFBullets)))
 
@@ -153,6 +163,7 @@ def isMeetBullet(listOfPlayerBullets, listOfEnemyBullets):
             if (positionOfBulletPlayer[1] <= positionOfBulletEn[1]+15) and (((positionOfBulletEn[0] >= positionOfBulletPlayer[0]) and (positionOfBulletEn[0] <= positionOfBulletPlayer[0]+15)) or ((positionOfBulletEn[0]+10 >= positionOfBulletPlayer[0]) and (positionOfBulletEn[0]+10 <= positionOfBulletPlayer[0]+15))):
                 toDelete.append(playerBullet)
                 toDelete.append(enBullet)
+                winsound.PlaySound("sound/bMeetBullet.wav",winsound.SND_FILENAME | winsound.SND_ASYNC)
     return toDelete
 
 #___To check if bullets of player meet with enemy________________
@@ -166,6 +177,7 @@ def isMeetEnemy(listOfPlayerBullets, listOfEnemies):
             if (positionOfBulletPlayer[1] <= positionOfEn[1]+70) and (((positionOfBulletPlayer[0] >= positionOfEn[0]) and (positionOfBulletPlayer[0] <= positionOfEn[0]+55)) or ((positionOfBulletPlayer[0]+15 >= positionOfEn[0]) and (positionOfBulletPlayer[0]+15 <= positionOfEn[0]+55))):
                 toDelete.append(playerBullet)
                 toDelete.append(enemy)
+                winsound.PlaySound("sound/explosion.wav",winsound.SND_FILENAME | winsound.SND_ASYNC)
     return toDelete
 
 #___To check if bullets of enemies meet the player or not_______
@@ -176,8 +188,10 @@ def isBulletMeetPlayer(bullets, player):
         positionBullet = canvas.coords(bullet)
         if (positionBullet[1]+20 >= positionPlayer[1]) and (((positionBullet[0] >= positionPlayer[0]) and (positionBullet[0] <= positionPlayer[0]+80)) or ((positionBullet[0]+15 >= positionPlayer[0]) and (positionBullet[0]+15 <= positionPlayer[0]+80))):
             toDelete = bullet
+            winsound.PlaySound("sound/meetEn.wav",winsound.SND_FILENAME | winsound.SND_ASYNC)
     return toDelete
 
+#____To check if enemy meets player_______________________________
 def isEnemyMeetPlayer(enemies, player):
     toDelete = None
     positionPlayer = canvas.coords(player)
@@ -185,9 +199,10 @@ def isEnemyMeetPlayer(enemies, player):
         positionEn = canvas.coords(enemy)
         if (positionEn[1]+40 >= positionPlayer[1]) and (((positionEn[0] >= positionPlayer[0]) and (positionEn[0] <= positionPlayer[0]+80)) or ((positionEn[0]+55 >= positionPlayer[0]) and (positionEn[0]+55 <= positionPlayer[0]+80))):
             toDelete = enemy
+            winsound.PlaySound("sound/meetEn.wav",winsound.SND_FILENAME | winsound.SND_ASYNC)
     return toDelete
 
-#___To check the bullets of player meet bullets of enemy or nor______________
+#___To check the bullets of player meet bullets of enemy or not______________
 def bulletMeetBullet():
     global numOFBullets
     meetBullet = isMeetBullet(listOfPlayerBullets, listOfEnemyBullets)
@@ -231,38 +246,66 @@ def enemyMeetPlayer():
         toConfig -= 1
         canvas.itemconfig(listOfLives[toConfig], fill='white', outline='')
 
-#___Show result________________________________________________
-def finishGame():
-    canvas.delete('all')
-    canvas.create_text(350, 300, text = result, font=("Comic Sans", 30), fill='black')
-
 #___Move left by key______________________________
 def onKeyleft(event):
-    global playerX
+    global playerX, paused
+    paused = False
     if playerX > 10:
         playerX -= 10
     canvas.moveto(player, playerX, playerY)
 
 #___Move right by key_____________________________
 def onKeyRight(event):
-    global playerX
+    global playerX, paused
+    paused = False
     if playerX < 610:
         playerX += 10
     canvas.moveto(player, playerX, playerY)
 
 #___Move up by key________________________________
 def onKeyUp(event):
-    global playerY
+    global playerY, paused
+    paused = False
     if playerY > 10:
         playerY -= 10
     canvas.moveto(player, playerX, playerY)
 
 #___Move down by key______________________________
 def onKeyDown(event):
-    global playerY
+    global playerY, paused
+    paused = False
     if playerY < 510:
         playerY += 10
     canvas.moveto(player, playerX, playerY)
+
+#___Pause the game________________________________
+def toPause(event):
+    global paused
+    winsound.PlaySound("sound/pause.wav",winsound.SND_FILENAME | winsound.SND_ASYNC)
+    paused = True
+
+#___Pause the game________________________________
+def toUnPause(event):
+    global paused
+    paused = False
+
+#___Show result________________________________________________
+def finishGame():
+    canvas.delete('all')
+    canvas.create_text(350, 300, text = result, font=("Comic Sans", 30), fill='black')
+    again = Button(text='Restart', command=restart, bg=None)
+    leave = Button(text='Quit', command=byeGame)
+    again.pack()
+    leave.pack()
+
+#___Restart Game___________________________________
+def restart():
+    root.destroy()
+    os.system('python game.py')
+
+#___Don't play anymore______________________________
+def byeGame():
+    root.destroy()
 
 #======================================================================#
 
@@ -301,11 +344,13 @@ for i in range(6):
 globalProcess()
 
 #---Arrow keys to move-----------
+root.bind('<Key>', toUnPause)
 root.bind('<s>', onKeyleft)
 root.bind('<d>', onKeyRight)
 root.bind('<a>', onKeyUp)
 root.bind('<f>', onKeyDown)
 root.bind('<Return>', createBullet)
+root.bind('<p>', toPause)
 
 root.mainloop()
 
