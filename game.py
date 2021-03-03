@@ -24,7 +24,7 @@ result = 'Game Over!!!'
 
 #------------------Global Process------------------#
 def globalProcess():
-    global times, numOFBullets, toConfig, score, result
+    global times, numOFBullets, toConfig, score, result, resultImage
 
     times += 1
 
@@ -35,6 +35,7 @@ def globalProcess():
         #____To check if the player win with the score limited_______________________
         if score == 50:
             result = 'Congratulation'
+            resultImage = PhotoImage(file='pictures/win.gif')
             winsound.PlaySound("sound/win.wav",winsound.SND_FILENAME | winsound.SND_ASYNC)
             finishGame()
             return None
@@ -64,11 +65,11 @@ def globalProcess():
         moveBulletsOfPlayer()
 
         #___Move enemies__________
-        if times % 5 == 0:
+        if times % 4 == 0:
             moveEnemies()
 
         #___Create an enemy_______
-        if times % 75 == 0:
+        if times % 70 == 0:
             createEnemy()
 
         #___Enemies create the bullets___
@@ -148,7 +149,8 @@ def moveBulletsOfPlayer():
             canvas.delete(oneBullet)
             toPopPlayerBullet.append(i)
     for index in toPopPlayerBullet:
-        listOfPlayerBullets.pop(index)
+        if listOfPlayerBullets[index] in listOfPlayerBullets:
+            listOfPlayerBullets.pop(index)
     for bullet in listOfPlayerBullets:
         canvas.move(bullet, 0, -5)
 
@@ -174,7 +176,7 @@ def isMeetEnemy(listOfPlayerBullets, listOfEnemies):
 
         for enemy in listOfEnemies:
             positionOfEn = canvas.coords(enemy)
-            if (positionOfBulletPlayer[1] <= positionOfEn[1]+70) and (((positionOfBulletPlayer[0] >= positionOfEn[0]) and (positionOfBulletPlayer[0] <= positionOfEn[0]+55)) or ((positionOfBulletPlayer[0]+15 >= positionOfEn[0]) and (positionOfBulletPlayer[0]+15 <= positionOfEn[0]+55))):
+            if (positionOfBulletPlayer[1] <= positionOfEn[1]+20) and (((positionOfBulletPlayer[0] >= positionOfEn[0]) and (positionOfBulletPlayer[0] <= positionOfEn[0]+55)) or ((positionOfBulletPlayer[0]+15 >= positionOfEn[0]) and (positionOfBulletPlayer[0]+15 <= positionOfEn[0]+55))):
                 toDelete.append(playerBullet)
                 toDelete.append(enemy)
                 winsound.PlaySound("sound/explosion.wav",winsound.SND_FILENAME | winsound.SND_ASYNC)
@@ -186,7 +188,7 @@ def isBulletMeetPlayer(bullets, player):
     positionPlayer = canvas.coords(player)
     for bullet in bullets:
         positionBullet = canvas.coords(bullet)
-        if (positionBullet[1]+20 >= positionPlayer[1]) and (((positionBullet[0] >= positionPlayer[0]) and (positionBullet[0] <= positionPlayer[0]+80)) or ((positionBullet[0]+15 >= positionPlayer[0]) and (positionBullet[0]+15 <= positionPlayer[0]+80))):
+        if (positionBullet[1] -30 >= positionPlayer[1]) and (((positionBullet[0] >= positionPlayer[0]) and (positionBullet[0] <= positionPlayer[0]+80)) or ((positionBullet[0]+15 >= positionPlayer[0]) and (positionBullet[0]+15 <= positionPlayer[0]+80))):
             toDelete = bullet
             winsound.PlaySound("sound/meetEn.wav",winsound.SND_FILENAME | winsound.SND_ASYNC)
     return toDelete
@@ -197,7 +199,7 @@ def isEnemyMeetPlayer(enemies, player):
     positionPlayer = canvas.coords(player)
     for enemy in enemies:
         positionEn = canvas.coords(enemy)
-        if (positionEn[1]+40 >= positionPlayer[1]) and (((positionEn[0] >= positionPlayer[0]) and (positionEn[0] <= positionPlayer[0]+80)) or ((positionEn[0]+55 >= positionPlayer[0]) and (positionEn[0]+55 <= positionPlayer[0]+80))):
+        if (positionEn[1] >= positionPlayer[1]) and (((positionEn[0] >= positionPlayer[0]) and (positionEn[0] <= positionPlayer[0]+80)) or ((positionEn[0]+55 >= positionPlayer[0]) and (positionEn[0]+55 <= positionPlayer[0]+80))):
             toDelete = enemy
             winsound.PlaySound("sound/meetEn.wav",winsound.SND_FILENAME | winsound.SND_ASYNC)
     return toDelete
@@ -292,11 +294,14 @@ def toUnPause(event):
 #___Show result________________________________________________
 def finishGame():
     canvas.delete('all')
-    canvas.create_text(350, 300, text = result, font=("Comic Sans", 30), fill='black')
-    again = Button(text='Restart', command=restart, bg=None)
-    leave = Button(text='Quit', command=byeGame)
+    canvas.create_image(700, 650, anchor=SE, image=resultImage)
+    canvas.create_text(350, 250, text = result, font=("Comic Sans", 30), fill='red')
+    again = Button(text='Restart', padx=10, pady=2, command=restart, bg='green', fg='white')
+    leave = Button(text='Quit', padx=10, pady=2, command=byeGame, bg='red', fg='white')
     again.pack()
     leave.pack()
+    again.place(x=318, y=450)
+    leave.place(x=325, y=485)
 
 #___Restart Game___________________________________
 def restart():
@@ -323,6 +328,7 @@ gun = PhotoImage(file='pictures/playerBullet.gif')        # size of the bullet (
 enemyBullet = PhotoImage(file='pictures/enBullet.gif')    # size of the bullet (10x15)
 playerImage = PhotoImage(file='pictures/player.gif')      # size of the player (80x80)
 enemyImage = PhotoImage(file='pictures/enemy.gif')        # size of the player (55x70)
+resultImage = PhotoImage(file='pictures/over.gif')
 
 background = canvas.create_image(700, 650, anchor=SE, image=bgImage)
 player = canvas.create_image(playerX, playerY, anchor=NW, image=playerImage)
